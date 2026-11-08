@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+{% block title %}{{ post.title }} — BlogSpace{% endblock %}
+
+{% block head %}
+<style>
+  .post-wrap { max-width: 780px; margin: 0 auto; padding: 3rem 2rem 5rem; }
+  .post-breadcrumb { font-size: .8rem; color: var(--muted); margin-bottom: 1.5rem; }
+  .post-breadcrumb a { color: var(--accent); }
+  .post-title { font-family: var(--font-head); font-size: clamp(1.8rem,4vw,2.8rem); line-height: 1.18; margin-bottom: 1.2rem; }
+  .post-meta-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .8rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
+  .post-author { display: flex; align-items: center; gap: .7rem; font-size: .9rem; }
+  .avatar-emoji { font-size: 2rem; width: 44px; height: 44px; border-radius: 50%; background: rgba(232,201,122,.12); border: 2px solid rgba(232,201,122,.3); display: flex; align-items: center; justify-content: center; }
+  .author-info strong { display: block; }
+  .author-info span   { color: var(--muted); font-size: .8rem; }
+  .post-actions { display: flex; gap: .6rem; }
+  .post-media { margin: 2rem 0; border-radius: 14px; overflow: hidden; }
+  .post-media img, .post-media video { width: 100%; max-height: 500px; object-fit: cover; }
+  .post-body { font-size: 1.05rem; line-height: 1.8; color: #caccda; white-space: pre-wrap; margin-bottom: 3rem; }
+
+  .like-section { display: flex; align-items: center; gap: 1rem; padding: 1.5rem 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); margin-bottom: 3rem; }
+  .like-btn { display: flex; align-items: center; gap: .5rem; background: var(--surface); border: 1px solid var(--border); color: var(--muted); border-radius: 100px; padding: .55rem 1.2rem; font-size: .9rem; font-weight: 500; cursor: pointer; transition: all .2s; }
+  .like-btn:hover   { border-color: #e05c5c; color: #e05c5c; }
+  .like-btn.liked   { background: rgba(224,92,92,.12); border-color: #e05c5c; color: #e05c5c; }
+  .like-btn .heart  { font-size: 1.1rem; transition: transform .15s; }
+  .like-btn:hover .heart, .like-btn.liked .heart { transform: scale(1.25); }
+  #like-count { font-size: .85rem; color: var(--muted); }
+
+  .comments-section h2 { font-family: var(--font-head); font-size: 1.5rem; margin-bottom: 1.8rem; }
+  .comment-list { display: flex; flex-direction: column; gap: 1.2rem; margin-bottom: 2.5rem; }
+  .comment { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.1rem 1.4rem; }
+  .comment-header { display: flex; align-items: center; gap: .6rem; margin-bottom: .6rem; font-size: .82rem; }
+  .comment-av { font-size: 1.2rem; }
+  .comment-header .name { font-weight: 500; color: var(--accent); }
+  .comment-header .date { color: var(--muted); }
+  .comment-text { font-size: .92rem; color: #b5b8c7; }
+  .no-comments { color: var(--muted); font-size: .9rem; margin-bottom: 1.5rem; }
+
+  .comment-form-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.4rem; }
+  .comment-form-box h3 { font-size: 1rem; font-weight: 500; margin-bottom: 1rem; }
+  .comment-input { width: 100%; resize: vertical; min-height: 90px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: .8rem 1rem; color: var(--text); font-family: var(--font-body); font-size: .92rem; transition: border-color .2s; margin-bottom: .9rem; }
+  .comment-input:focus { outline: none; border-color: var(--accent); }
+
+  .modal-overlay { display: none; position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,.65); backdrop-filter: blur(4px); align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 2.2rem; max-width: 380px; width: 90%; text-align: center; }
+  .modal h3 { font-family: var(--font-head); margin-bottom: .6rem; }
+  .modal p  { color: var(--muted); font-size: .9rem; margin-bottom: 1.8rem; }
+  .modal-btns { display: flex; gap: .8rem; justify-content: center; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="post-wrap">
+  <p class="post-breadcrumb"><a href="{{ url_for('index') }}">← Все посты</a></p>
+
+  <h1 class="post-title">{{ post.title }}</h1>
+  <div class="post-meta-row">
+    <div class="post-author">
+      <div class="avatar-emoji">{{ post.author.avatar }}</div>
+      <div class="author-info">
+        <strong>{{ post.author.username }}</strong>
+        <span>{{ post.created_at.strftime('%d %B %Y, %H:%M') }}</span>
+      </div>
+    </div>
+    {% if current_user.is_authenticated and post.user_id == current_user.id %}
+    <div class="post-actions">
+      <a class="btn btn-ghost btn-sm" href="{{ url_for('post_edit', post_id=post.id) }}">✎ Редактировать</a>
+      <button class="btn btn-danger btn-sm" onclick="document.getElementById('del-modal').classList.add('open')">✕ Удалить</button>
+    </div>
+    {% endif %}
+  </div>
+
+
+  {% if post.media_path %}
+  <div class="post-media">
+    {% if post.media_type == 'video' %}
+    <video controls>
+      <source src="{{ url_for('uploaded_file', filename=post.media_path) }}">
+    </video>
+    {% else %}
+    <img src="{{ url_for('uploaded_file', filename=post.media_path) }}" alt="{{ post.title }}">
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if post.ai_image %}
+  <div class="post-media">
+    <img src="data:image/png;base64,{{ post.ai_image }}" alt="AI generated image">
+  </div>
+  {% endif %}
+
+  <div class="post-body">{{ post.content }}</div>
+
+  <div class="like-section">
+    {% if current_user.is_authenticated %}
+    <button class="like-btn {% if user_liked %}liked{% endif %}" id="like-btn" data-post-id="{{ post.id }}">
+      <span class="heart">♥</span> Нравится
+    </button>
+    {% else %}
+    <button class="like-btn" onclick="window.location='{{ url_for('login') }}'">♥ Нравится</button>
+    {% endif %}
+    <span id="like-count">{{ post.likes_count }} {{ 'лайк' if post.likes_count == 1 else 'лайков' }}</span>
+  </div>
+
+  <div class="comments-section">
+    <h2>Комментарии <span style="color:var(--muted);font-weight:300;font-size:1.1rem">({{ post.comments|length }})</span></h2>
+    <div class="comment-list" id="comment-list">
+      {% for c in comments %}
+      <div class="comment">
+        <div class="comment-header">
+          <span class="comment-av">{{ c.author.avatar }}</span>
+          <span class="name">{{ c.author.username }}</span>
+          <span class="date">{{ c.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
+        </div>
+        <p class="comment-text">{{ c.content }}</p>
+      </div>
+      {% else %}
+      <p class="no-comments" id="no-comments-msg">Пока комментариев нет. Будьте первым!</p>
+      {% endfor %}
+    </div>
+
+    {% if current_user.is_authenticated %}
+    <div class="comment-form-box">
+      <h3>Написать комментарий</h3>
+      <textarea class="comment-input" id="comment-input" placeholder="Ваши мысли..."></textarea>
+      <button class="btn btn-primary" id="submit-comment">Опубликовать</button>
+    </div>
+    {% else %}
+    <p style="color:var(--muted);font-size:.9rem">
+      <a href="{{ url_for('login') }}" style="color:var(--accent)">Войдите</a>, чтобы оставить комментарий.
+    </p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="modal-overlay" id="del-modal">
+  <div class="modal">
+    <h3>Удалить пост?</h3>
+    <p>Это действие нельзя отменить. Пост и все комментарии будут удалены навсегда.</p>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="document.getElementById('del-modal').classList.remove('open')">Отмена</button>
+      <form method="POST" action="{{ url_for('post_delete', post_id=post.id) }}" style="display:inline">
+        <button type="submit" class="btn btn-danger">Удалить</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+const likeBtn = document.getElementById('like-btn');
+if (likeBtn) {
+  likeBtn.addEventListener('click', async () => {
+    const res  = await fetch(`/post/${likeBtn.dataset.postId}/like`, { method: 'POST' });
+    const data = await res.json();
+    document.getElementById('like-count').textContent = data.likes + (data.likes === 1 ? ' лайк' : ' лайков');
+    likeBtn.classList.toggle('liked', data.liked);
+  });
+}
+
+const submitBtn = document.getElementById('submit-comment');
+if (submitBtn) {
+  submitBtn.addEventListener('click', async () => {
+    const input   = document.getElementById('comment-input');
+    const content = input.value.trim();
+    if (!content) return;
+    const res  = await fetch(`/post/{{ post.id }}/comment`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content })
+    });
+    const data = await res.json();
+    if (data.status !== 'ok') return;
+    const noMsg = document.getElementById('no-comments-msg');
+    if (noMsg) noMsg.remove();
+    const list = document.getElementById('comment-list');
+    const div  = document.createElement('div');
+    div.className = 'comment';
+    div.innerHTML = `
+      <div class="comment-header">
+        <span class="comment-av">${data.avatar}</span>
+        <span class="name">${data.username}</span>
+        <span class="date">${data.date}</span>
+      </div>
+      <p class="comment-text">${data.content}</p>`;
+    list.appendChild(div);
+    input.value = '';
+    div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  });
+}
+</script>
+{% endblock %}

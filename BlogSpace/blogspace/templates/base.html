@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}BlogSpace{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:        #0e0f11;
+      --surface:   #16181c;
+      --border:    #252830;
+      --accent:    #e8c97a;
+      --accent2:   #d4a853;
+      --text:      #e8e9ed;
+      --muted:     #787c8a;
+      --danger:    #e05c5c;
+      --success:   #5cc98e;
+      --radius:    14px;
+      --font-head: 'Playfair Display', Georgia, serif;
+      --font-body: 'DM Sans', system-ui, sans-serif;
+    }
+    body { background: var(--bg); color: var(--text); font-family: var(--font-body); font-weight: 300; line-height: 1.65; min-height: 100vh; }
+    a { color: inherit; text-decoration: none; }
+
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(14,15,17,.85); backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border); padding: 0 2rem;
+    }
+    .nav-inner { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; height: 60px; }
+    .nav-logo { font-family: var(--font-head); font-size: 1.35rem; letter-spacing: .03em; color: var(--accent); display: flex; align-items: center; gap: .4rem; }
+    .nav-links { display: flex; gap: 1rem; align-items: center; }
+    .nav-links a { font-size: .875rem; font-weight: 400; color: var(--muted); padding: .35rem .7rem; border-radius: 8px; transition: color .2s, background .2s; }
+    .nav-links a:hover { color: var(--text); background: var(--surface); }
+    .btn-nav { background: var(--accent) !important; color: #1a1500 !important; font-weight: 500 !important; padding: .4rem 1rem !important; border-radius: 8px !important; }
+    .nav-avatar { font-size: 1.3rem; }
+
+    .flashes { max-width: 1100px; margin: 1.2rem auto 0; padding: 0 2rem; }
+    .flash { padding: .75rem 1.2rem; border-radius: var(--radius); font-size: .875rem; margin-bottom: .6rem; }
+    .flash.success { background: rgba(92,201,142,.12); border: 1px solid rgba(92,201,142,.3); color: var(--success); }
+    .flash.error   { background: rgba(224,92,92,.12); border: 1px solid rgba(224,92,92,.3); color: var(--danger); }
+    .flash.info    { background: rgba(120,124,138,.12); border: 1px solid var(--border); color: var(--muted); }
+
+    .page { max-width: 1100px; margin: 0 auto; padding: 3rem 2rem; }
+    .btn { display: inline-flex; align-items: center; gap: .4rem; padding: .6rem 1.4rem; border-radius: 10px; font-family: var(--font-body); font-size: .9rem; font-weight: 500; cursor: pointer; border: none; transition: opacity .2s, transform .1s; }
+    .btn:hover { opacity: .88; }
+    .btn:active { transform: scale(.97); }
+    .btn-primary { background: var(--accent); color: #1a1500; }
+    .btn-ghost   { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+    .btn-danger  { background: var(--danger); color: #fff; }
+    .btn-sm      { padding: .38rem .9rem; font-size: .8rem; }
+
+    .form-group { margin-bottom: 1.4rem; }
+    label { display: block; font-size: .8rem; font-weight: 500; color: var(--muted); margin-bottom: .5rem; letter-spacing: .06em; text-transform: uppercase; }
+    input[type=text], input[type=email], input[type=password], textarea {
+      width: 100%; background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); border-radius: 10px; padding: .75rem 1rem;
+      font-family: var(--font-body); font-size: .95rem; transition: border-color .2s;
+    }
+    input:focus, textarea:focus { outline: none; border-color: var(--accent); }
+    textarea { resize: vertical; min-height: 180px; }
+    code { background: rgba(232,201,122,.1); color: var(--accent); padding: .1rem .4rem; border-radius: 4px; font-size: .85em; }
+  </style>
+  {% block head %}{% endblock %}
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a class="nav-logo" href="{{ url_for('index') }}">✦ BlogSpace</a>
+    <div class="nav-links">
+      {% if current_user.is_authenticated %}
+        <a href="{{ url_for('post_create') }}">+ Написать</a>
+        <a href="{{ url_for('profile') }}">
+          <span class="nav-avatar">{{ current_user.avatar }}</span> {{ current_user.username }}
+        </a>
+        <a href="{{ url_for('logout') }}">Выйти</a>
+      {% else %}
+        <a href="{{ url_for('login') }}">Войти</a>
+        <a class="btn-nav" href="{{ url_for('register') }}">Регистрация</a>
+      {% endif %}
+    </div>
+  </div>
+</nav>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flashes">
+      {% for category, message in messages %}
+        <div class="flash {{ category }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+{% block content %}{% endblock %}
+</body>
+</html>

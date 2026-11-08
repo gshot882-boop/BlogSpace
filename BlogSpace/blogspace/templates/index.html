@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% block title %}BlogSpace — Делись идеями{% endblock %}
+
+{% block head %}
+<style>
+  .hero {
+    position: relative; overflow: hidden;
+    padding: 7rem 2rem 5.5rem;
+    text-align: center;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse 70% 55% at 50% -10%, rgba(232,201,122,.13) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 40% at 80% 90%,  rgba(232,201,122,.07) 0%, transparent 60%);
+  }
+  .hero-inner { position: relative; z-index: 1; max-width: 720px; margin: 0 auto; }
+  .hero-tag {
+    display: inline-block; margin-bottom: 1.5rem;
+    font-size: .72rem; font-weight: 500; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--accent); border: 1px solid rgba(232,201,122,.3);
+    border-radius: 100px; padding: .35rem 1rem;
+  }
+  .hero h1 {
+    font-family: var(--font-head);
+    font-size: clamp(2.6rem, 6vw, 4.2rem);
+    line-height: 1.12; letter-spacing: -.01em;
+    color: var(--text);
+    margin-bottom: 1.2rem;
+  }
+  .hero h1 em { font-style: italic; color: var(--accent); }
+  .hero p {
+    font-size: 1.05rem; color: var(--muted);
+    max-width: 480px; margin: 0 auto 2.4rem;
+  }
+  .hero-cta { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+  .divider { border: none; border-top: 1px solid var(--border); }
+
+  .sort-bar {
+    max-width: 1100px; margin: 2.5rem auto .5rem;
+    padding: 0 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .sort-bar h2 { font-family: var(--font-head); font-size: 1.5rem; }
+  .sort-tabs  { display: flex; gap: .5rem; }
+  .sort-tab {
+    font-size: .8rem; font-weight: 500; padding: .4rem .9rem;
+    border-radius: 8px; color: var(--muted); border: 1px solid var(--border);
+    transition: all .2s;
+  }
+  .sort-tab:hover { color: var(--text); border-color: #3a3d47; }
+  .sort-tab.active { background: var(--surface); color: var(--accent); border-color: rgba(232,201,122,.4); }
+
+
+  .posts-grid {
+    max-width: 1100px; margin: 0 auto;
+    padding: 1.5rem 2rem 4rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.6rem;
+    display: flex; flex-direction: column; gap: .9rem;
+    transition: border-color .2s, transform .2s;
+  }
+  .card:hover { border-color: rgba(232,201,122,.3); transform: translateY(-3px); }
+  .card-meta {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: .75rem; color: var(--muted);
+  }
+  .card-author { display: flex; align-items: center; gap: .5rem; }
+  .avatar {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: var(--accent); color: #1a1500;
+    font-size: .72rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .card h3 {
+    font-family: var(--font-head);
+    font-size: 1.2rem; line-height: 1.3;
+    color: var(--text);
+  }
+  .card h3 a:hover { color: var(--accent); }
+  .card-excerpt {
+    font-size: .88rem; color: var(--muted);
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .card-footer {
+    margin-top: auto;
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: .78rem; color: var(--muted);
+  }
+  .card-stats { display: flex; gap: 1rem; }
+  .stat { display: flex; align-items: center; gap: .3rem; }
+
+  .empty {
+    grid-column: 1/-1; text-align: center;
+    padding: 5rem 2rem; color: var(--muted);
+  }
+  .empty h3 { font-family: var(--font-head); font-size: 1.6rem; margin-bottom: .6rem; color: var(--text); }
+</style>
+{% endblock %}
+
+{% block content %}
+{% if not current_user.is_authenticated %}
+<section class="hero">
+  <div class="hero-inner">
+    <span class="hero-tag">✦ Платформа для блогеров</span>
+    <h1>Место, где<br><em>идеи обретают голос</em></h1>
+    <p>Пиши, делись мыслями, вдохновляй других. Простая и красивая блог-платформа.</p>
+    <div class="hero-cta">
+      <a class="btn btn-primary" href="{{ url_for('register') }}">Начать</a>
+      <a class="btn btn-ghost"   href="{{ url_for('login') }}">Войти в аккаунт</a>
+    </div>
+  </div>
+</section>
+<hr class="divider">
+{% endif %}
+
+<div class="sort-bar">
+  <h2>Публикации</h2>
+  <div class="sort-tabs">
+    <a class="sort-tab {% if sort=='new' %}active{% endif %}"
+       href="{{ url_for('index', sort='new') }}">🕒 Новые</a>
+    <a class="sort-tab {% if sort=='popular' %}active{% endif %}"
+       href="{{ url_for('index', sort='popular') }}">🔥 Популярные</a>
+  </div>
+</div>
+
+<div class="posts-grid">
+  {% for post in posts %}
+  <article class="card">
+    <div class="card-meta">
+      <div class="card-author">
+        <div class="avatar">{{ post.author.username[0].upper() }}</div>
+        <span>{{ post.author.username }}</span>
+      </div>
+      <span>{{ post.created_at.strftime('%d.%m.%Y') }}</span>
+    </div>
+
+    <h3><a href="{{ url_for('post_detail', post_id=post.id) }}">{{ post.title }}</a></h3>
+    <p class="card-excerpt">{{ post.content }}</p>
+
+    <div class="card-footer">
+      <div class="card-stats">
+        <span class="stat">♥ {{ post.likes_count }}</span>
+        <span class="stat">💬 {{ post.comments|length }}</span>
+      </div>
+      <a class="btn btn-ghost btn-sm" href="{{ url_for('post_detail', post_id=post.id) }}">Читать →</a>
+    </div>
+  </article>
+  {% else %}
+  <div class="empty">
+    <h3>Пока постов нет</h3>
+    <p>Будьте первым, кто напишет что-нибудь интересное!</p>
+    {% if current_user.is_authenticated %}
+    <a class="btn btn-primary" style="margin-top:1.5rem" href="{{ url_for('post_create') }}">Написать пост</a>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
